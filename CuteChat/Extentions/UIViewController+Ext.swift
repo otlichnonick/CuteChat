@@ -10,7 +10,7 @@ import UIKit
 
 extension UIViewController {
     
-    func presentMessageAlert(title: String, message: String, buttonTitle: String) {
+    func presentAlert(title: String, message: String, buttonTitle: String) {
         DispatchQueue.main.async {
             let alert = UIAlertController(title: title, message: message , preferredStyle: .alert)
             alert.modalPresentationStyle = .overFullScreen
@@ -36,6 +36,24 @@ extension UIViewController {
         let cancelAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
         alert.addAction(confirmAction)
         alert.addAction(cancelAction)
+        self.present(alert, animated: true, completion: nil)
+    }
+    
+    func presentAlertForChangeAvatar(with firstAction: UIAlertAction, or secondAction: UIAlertAction) {
+        let alert = UIAlertController(title: "Choose the Library", message: "Please, choose the storage to upload new avatar from", preferredStyle: .alert)
+        alert.modalPresentationStyle = .overFullScreen
+        alert.modalTransitionStyle = .crossDissolve
+        alert.addAction(firstAction)
+        alert.addAction(secondAction)
+        present(alert, animated: true, completion: nil)
+    }
+    
+    func presentAlertForDeleteAvatar(with firstAction: UIAlertAction, or secondAction: UIAlertAction) {
+        let alert = UIAlertController(title: "Delete your avatar?", message: "Please, press OK to delete your avatar", preferredStyle: .alert)
+        alert.modalPresentationStyle = .overFullScreen
+        alert.modalTransitionStyle = .crossDissolve
+        alert.addAction(firstAction)
+        alert.addAction(secondAction)
         self.present(alert, animated: true, completion: nil)
     }
     

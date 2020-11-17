@@ -17,4 +17,5 @@ enum AlertMesseges {
     static let wrongUsername  = "The name must be written in Cyrillic and start with a capital letter. Please, try again."
     static let updatePassord  = "Your new password is set!"
     static let updateUsername = "Your new username is set!"
+    static let notChanged     = "The data was not changed. Try again"
 }

@@ -23,7 +23,6 @@ class MainVC: UIViewController {
     let currentUser         = Auth.auth().currentUser
     let defaults            = UserDefaults.standard
     
-    var username            = ""
     var avatarLabel: UILabel?
     var avatarImageView: UIImageView?
     
@@ -37,8 +36,7 @@ class MainVC: UIViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        configureUsername()
-        configureAvatarView()
+        configureAvatarAndUsername()
     }
     
     @IBAction func settingsButtonTapped(_ sender: UIButton) {
@@ -52,7 +50,7 @@ class MainVC: UIViewController {
             try Auth.auth().signOut()
             navigationController?.popToRootViewController(animated: true)
         } catch let error {
-            presentMessageAlert(title: AlertMesseges.titleAlert, message: error.localizedDescription, buttonTitle: "Ok")
+            presentAlert(title: AlertMesseges.titleAlert, message: error.localizedDescription, buttonTitle: "Ok")
         }
         UserDefaults.standard.removeObject(forKey: "userID")
     }
@@ -64,7 +62,7 @@ class MainVC: UIViewController {
         
         FirebaseManager.shared.createNewMessage(with: messageSender, and: messageBody) { (alertMessage) in
             if alertMessage != nil {
-                self.presentMessageAlert(title: AlertMesseges.titleAlert, message: alertMessage!.localizedDescription, buttonTitle: "Ok")
+                self.presentAlert(title: AlertMesseges.titleAlert, message: alertMessage!.localizedDescription, buttonTitle: "Ok")
             }
         }
         DispatchQueue.main.async { self.messageTextField.text = "" }
@@ -74,7 +72,7 @@ class MainVC: UIViewController {
         FirebaseManager.shared.loadMessages { (result) in
             switch result {
             case .failure(let error):
-                self.presentMessageAlert(title: AlertMesseges.titleAlert, message: error.localizedDescription, buttonTitle: "Ok")
+                self.presentAlert(title: AlertMesseges.titleAlert, message: error.localizedDescription, buttonTitle: "Ok")
             case .success(let messages):
                 self.updateTableView(with: messages)
             }
@@ -101,39 +99,14 @@ class MainVC: UIViewController {
         tableView.dataSource            = self
         tableView.separatorStyle        = .none
         tableView.register(UINib(nibName: "MessageCell", bundle: nil), forCellReuseIdentifier: "MessageCell")
-        configureAvatarView()
-        configureUsername()
+        configureAvatarAndUsername()
     }
     
-    func configureUsername() {
-        guard let user = currentUser else { return }
-        username            = user.displayName ?? "user № \(user.uid)"
-        usernameLabel.text  = username
+    func configureAvatarAndUsername() {
+        currentUser?.photoURL == nil ? UIHelper.addAvatarLabel(on: avatarView, fontSize: 15) : UIHelper.addAvatarImage(on: avatarView)
+        usernameLabel.text  = currentUser?.displayName ?? "user № \(String(describing: currentUser?.uid))"
     }
-    
-    func configureAvatarView() {
-        if currentUser?.photoURL == nil {
-            addAvatarLabel()
-        } else {
-            addAvatarImage()
-        }
-    }
-    
-    func addAvatarLabel() {
-        avatarLabel = UIHelper.addLabel(on: avatarView)
-        avatarLabel?.text = currentUser?.email?.prefix(2).uppercased()
-        avatarLabel?.backgroundColor = UserDefaults.standard.colorForKey(key: "color")
-    }
-    
-    func addAvatarImage() {
-        FirebaseManager.shared.getPhoto(from: (currentUser?.photoURL)!) { (image) in
-            DispatchQueue.main.async {
-                self.avatarImageView = UIHelper.addImageView(on: self.avatarView)
-                self.avatarImageView?.image = image
-            }
-        }
-    }
-    
+
     @objc func keyboardWillShow(notification: Notification) {
         guard let keyboardSize = (notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue else { return }
         if view.frame.origin.y == 0 {

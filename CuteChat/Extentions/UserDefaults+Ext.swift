@@ -9,6 +9,7 @@
 import UIKit
 
 extension UserDefaults {
+    
   func colorForKey(key: String) -> UIColor? {
     var colorReturnded: UIColor?
     if let colorData = data(forKey: key) {
@@ -17,7 +18,7 @@ extension UserDefaults {
           colorReturnded = color
         }
       } catch {
-        print("Error UserDefaults")
+        print("Could not set UIColor from Data with key \"color\"")
       }
     }
     return colorReturnded
@@ -30,7 +31,7 @@ extension UserDefaults {
         let data = try NSKeyedArchiver.archivedData(withRootObject: color, requiringSecureCoding: false) as NSData?
         colorData = data
       } catch {
-        print("Error UserDefaults")
+        print("Could not convert UIColor to Data with key \"color\"")
       }
     }
     set(colorData, forKey: key)

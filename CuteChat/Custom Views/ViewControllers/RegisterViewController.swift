@@ -19,26 +19,26 @@ class RegisterViewController: UIViewController {
     
     weak var delegate: ActionButtonTappedProtocol!
     var user: User!
-
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         configureUIElements()
     }
-
+    
     @IBAction func registerTappedButton(_ sender: UIButton) {
         guard let email = emailTextField.text,
             let password = enterPasswordTextField.text,
             email != "", password != "" else {
-                presentMessageAlert(title: AlertMesseges.titleAlert, message: AlertMesseges.emptyFields, buttonTitle: "Ok")
+                presentAlert(title: AlertMesseges.titleAlert, message: AlertMesseges.emptyFields, buttonTitle: "Ok")
                 return
         }
         guard enterPasswordTextField.text == confirmPasswordTextField.text else {
-            presentMessageAlert(title: AlertMesseges.titleAlert, message: AlertMesseges.missMatched, buttonTitle: "Ok")
+            presentAlert(title: AlertMesseges.titleAlert, message: AlertMesseges.missMatched, buttonTitle: "Ok")
             return
         }
         Auth.auth().createUser(withEmail: email, password: password) { authResult, error in
             guard error == nil else {
-                self.presentMessageAlert(title: AlertMesseges.titleAlert, message: error!.localizedDescription, buttonTitle: "Ok")
+                self.presentAlert(title: AlertMesseges.titleAlert, message: error!.localizedDescription, buttonTitle: "Ok")
                 return
             }
             guard let authResult = authResult else { return }
@@ -55,6 +55,4 @@ class RegisterViewController: UIViewController {
         confirmPasswordTextField.layer.cornerRadius = radius
         registerButton.layer.cornerRadius           = radius
     }
-    
-
 }

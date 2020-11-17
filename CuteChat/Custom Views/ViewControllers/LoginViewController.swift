@@ -30,7 +30,7 @@ class LoginViewController: UIViewController {
             return }
         Auth.auth().signIn(withEmail: email, password: password) { (authResult, error) in
             guard error == nil else {
-                self.presentMessageAlert(title: "Something went wrong", message: error!.localizedDescription, buttonTitle: "Ok")
+                self.presentAlert(title: "Something went wrong", message: error!.localizedDescription, buttonTitle: "Ok")
                 return
             }
             guard let authResult = authResult else { return }

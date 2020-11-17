@@ -23,5 +23,4 @@ enum FStore {
 enum SFSymbols {
     static let logout           = UIImage(systemName: "escape")
     static let settings         = UIImage(systemName: "slider.horisontal.3")
-
 }

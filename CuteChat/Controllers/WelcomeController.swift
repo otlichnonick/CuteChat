@@ -14,8 +14,8 @@ class WelcomeController: UIViewController {
     @IBOutlet weak var authSegmentControl: UISegmentedControl!
     @IBOutlet weak var authContainerView: UIView!
     
-    var registerVC = RegisterViewController()
-    var loginVC = LoginViewController()
+    var registerVC  = RegisterViewController()
+    var loginVC     = LoginViewController()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -25,11 +25,6 @@ class WelcomeController: UIViewController {
         if UserDefaults.standard.value(forKey: "userID") as? String == Auth.auth().currentUser?.uid {
             passToMainVC()
         }
-    }
-    
-    override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
-
     }
     
     @IBAction func tappedSegmentControl(_ sender: UISegmentedControl) {

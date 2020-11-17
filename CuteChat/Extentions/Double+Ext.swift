@@ -11,11 +11,12 @@ import Foundation
 extension Double {
 
 func convertDateFromWebToApp() -> String {
-        let date = Date(timeIntervalSince1970: self)
-        let dateFormatter = DateFormatter()
-        dateFormatter.locale = Locale(identifier: "en_US")
+        let date                = Date(timeIntervalSince1970: self)
+        let dateFormatter       = DateFormatter()
+        dateFormatter.locale    = Locale(identifier: "en_US")
         dateFormatter.dateStyle = .medium
         dateFormatter.timeStyle = .medium
+    
         return dateFormatter.string(from: date)
     }
 }

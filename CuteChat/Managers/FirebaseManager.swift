@@ -48,8 +48,9 @@ class FirebaseManager {
         }
     }
     
-    func uploadImage(currentUserID: String, photo: UIImage, completed: @escaping (Result<URL, Error>) -> Void) {
-        let ref = Storage.storage().reference().child("avatars").child(currentUserID)
+    func uploadImage(imageName: String, photo: UIImage, completed: @escaping (Result<URL, Error>) -> Void) {
+        guard let userFolder = Auth.auth().currentUser?.email else { return }
+        let ref = Storage.storage().reference().child("avatars").child(userFolder).child(imageName)
         guard let imageData = photo.jpegData(compressionQuality: 0.5) else { return }
         let metaData = StorageMetadata()
         metaData.contentType = "image/jpeg"
@@ -66,6 +67,31 @@ class FirebaseManager {
                 }
                 completed(.success(url))
             }
+        }
+    }
+    
+    func downloadImages(userFolder: String, completed: @escaping (Result<[UIImage], Error>) -> Void) {
+        let storageRef = Storage.storage().reference().child("avatars").child(userFolder)
+        var imagesArray: [UIImage] = []
+        storageRef.listAll { (result, error) in
+            guard error == nil else {
+                completed(.failure(error!))
+                return
+            }
+            for item in result.items {
+                item.getData(maxSize: 2 * 1024 * 1024) { (data, error) in
+                    guard let data = data else {
+                        completed(.failure(error!))
+                        return
+                    }
+                    guard let image = UIImage(data: data) else { return }
+                    DispatchQueue.main.async {
+                        imagesArray.append(image)
+                        print(imagesArray.count)
+                    }
+                }
+            }
+            completed(.success(imagesArray))
         }
     }
     

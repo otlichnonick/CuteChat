@@ -21,7 +21,9 @@ class SettingsVC: UIViewController {
     let currentUser             = Auth.auth().currentUser
     let changeRequest           = Auth.auth().currentUser?.createProfileChangeRequest()
     let defaults                = UserDefaults.standard
+    
     var arrayUIViews: [UIView]  = []
+    var imagesArray: [UIImage]  = []
     var avatarImageView: UIImageView?
     var avatarLabel: UILabel?
     
@@ -32,72 +34,51 @@ class SettingsVC: UIViewController {
     
     @IBAction func changeUsernameAction(_ sender: UIButton) {
         presentAlerfForChangeData(title: "Change username", message: nil) { text in
-            guard let name = text,
-                !name.isEmpty,
-                name.first!.isUppercase,
-                name.isCyrillic
-                else {
-                    self.presentMessageAlert(title: AlertMesseges.titleAlert, message: AlertMesseges.wrongUsername, buttonTitle: "Ok")
-                    return
+            guard let name = text, UIHelper.checkUsername(with: name) else {
+                self.presentAlert(title: AlertMesseges.titleAlert, message: AlertMesseges.wrongUsername, buttonTitle: "Ok")
+                return
             }
             self.changeRequest?.displayName = name
             self.saveSomeChanges()
-            self.presentMessageAlert(title: "Success!", message: AlertMesseges.updateUsername, buttonTitle: "Cool")
+            self.presentAlert(title: "Success!", message: AlertMesseges.updateUsername, buttonTitle: "Cool")
         }
     }
     
     @IBAction func changePasswordAction(_ sender: UIButton) {
         presentAlerfForChangeData(title: "Change password", message: nil) { text in
             guard let newPassword = text else {
-                self.presentMessageAlert(title: AlertMesseges.titleAlert, message: AlertMesseges.emptyField, buttonTitle: "Ok")
+                self.presentAlert(title: AlertMesseges.titleAlert, message: AlertMesseges.emptyField, buttonTitle: "Ok")
                 return
             }
             self.currentUser?.updatePassword(to: newPassword, completion: { error in
                 if error != nil {
-                    self.presentMessageAlert(title: AlertMesseges.titleAlert, message: error!.localizedDescription, buttonTitle: "Ok")
+                    self.presentAlert(title: AlertMesseges.titleAlert, message: error!.localizedDescription, buttonTitle: "Ok")
                 }
-                self.presentMessageAlert(title: "Success!", message: AlertMesseges.updatePassord, buttonTitle: "Cool")
+                self.presentAlert(title: "Success!", message: AlertMesseges.updatePassord, buttonTitle: "Cool")
             })
         }
     }
     
     @IBAction func changeAvatarAction(_ sender: UIButton) {
-        let alert = UIAlertController(title: "Choose the Library", message: "Please, choose the storage to upload new avatar from", preferredStyle: .alert)
-        alert.modalPresentationStyle = .overFullScreen
-        alert.modalTransitionStyle = .crossDissolve
-        let fromPhotoLibrary = UIAlertAction(title: "Photo Library", style: .default) { action in
+        let photoLibrary = UIAlertAction(title: "Photo Library", style: .default) { action in
             self.getImageFromPhotoLibrary()
         }
-        let fromFireStorage = UIAlertAction(title: "Storage Library", style: .default) { action in
+        let fireStorage = UIAlertAction(title: "Storage Library", style: .default) { action in
             self.getImageFromStorageLibrary()
         }
-        alert.addAction(fromPhotoLibrary)
-        alert.addAction(fromFireStorage)
-        present(alert, animated: true, completion: nil)
+        presentAlertForChangeAvatar(with: photoLibrary, or: fireStorage)
     }
     
     @IBAction func deleteAvatarAction(_ sender: UIButton) {
         guard avatarImageView != nil else {
-            presentMessageAlert(title: AlertMesseges.titleAlert, message: "Avatar doesn't set", buttonTitle: "Ok")
+            presentAlert(title: AlertMesseges.titleAlert, message: "Avatar doesn't set", buttonTitle: "Ok")
             return }
-        let alert = UIAlertController(title: "Delete your avatar?", message: "Please, press OK to delete your avatar", preferredStyle: .alert)
-        alert.modalPresentationStyle = .overFullScreen
-        alert.modalTransitionStyle = .crossDissolve
         let confirm = UIAlertAction(title: "Ok", style: .default) { action in
-            self.addAvatarLabel()
-            self.avatarImageView?.removeFromSuperview()
-            self.avatarImageView = nil
-            let ref = Storage.storage().reference().child("avatars").child(self.currentUser!.uid)
-            ref.delete { (error) in
-                if error != nil {
-                    self.presentMessageAlert(title: AlertMesseges.titleAlert, message: error!.localizedDescription, buttonTitle: "Ok")
-                }
-            }
+            UIHelper.addAvatarLabel(on: self.avatarView, fontSize: 80)
+            self.deleteAvatarImage()
         }
-        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
-        alert.addAction(confirm)
-        alert.addAction(cancelAction)
-        self.present(alert, animated: true, completion: nil)
+        let cancel = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
+        presentAlertForDeleteAvatar(with: confirm, or: cancel)
     }
     
     func configureUIElements() {
@@ -108,39 +89,22 @@ class SettingsVC: UIViewController {
             view.layer.borderColor  = UIColor.systemGray2.cgColor
         }
         emailLabel.text = currentUser?.email
-        configureAvatarView()
-    }
-    
-    func configureAvatarView() {
-        if currentUser?.photoURL == nil {
-            addAvatarLabel()
-        } else {
-            addAvatarImage()
-        }
+        currentUser?.photoURL == nil ? UIHelper.addAvatarLabel(on: avatarView, fontSize: 80) : UIHelper.addAvatarImage(on: avatarView)
     }
     
     func saveSomeChanges() {
-        self.changeRequest?.commitChanges(completion: { (error) in
+        self.changeRequest?.commitChanges { (error) in
             if error != nil {
-                self.presentMessageAlert(title: AlertMesseges.titleAlert, message: error!.localizedDescription, buttonTitle: "Ok")
-            }
-        })
-    }
-    
-    func addAvatarLabel() {
-        avatarLabel = UIHelper.addLabel(on: avatarView)
-        avatarLabel?.text = currentUser?.email?.prefix(2).uppercased()
-        avatarLabel?.backgroundColor = UserDefaults.standard.colorForKey(key: "color")
-        avatarLabel?.font = .systemFont(ofSize: 80)
-    }
-    
-    func addAvatarImage() {
-        FirebaseManager.shared.getPhoto(from: (currentUser?.photoURL)!) { (image) in
-            DispatchQueue.main.async {
-                self.avatarImageView = UIHelper.addImageView(on: self.avatarView)
-                self.avatarImageView?.image = image
+                self.presentAlert(title: AlertMesseges.titleAlert, message: AlertMesseges.notChanged, buttonTitle: "Ok")
             }
         }
+    }
+    
+    func deleteAvatarImage() {
+        avatarImageView?.removeFromSuperview()
+        avatarImageView = nil
+        changeRequest?.photoURL = nil
+        saveSomeChanges()
     }
     
     func getImageFromPhotoLibrary() {
@@ -151,7 +115,15 @@ class SettingsVC: UIViewController {
     }
     
     func getImageFromStorageLibrary() {
-        
+        guard let userFolder = Auth.auth().currentUser?.email else { return }
+        FirebaseManager.shared.downloadImages(userFolder: userFolder) { (result) in
+            switch result {
+            case .success(let images):
+                print(images.count)
+            case .failure(let error):
+                self.presentAlert(title: AlertMesseges.titleAlert, message: error.localizedDescription, buttonTitle: "Ok")
+            }
+        }
     }
 }
 
@@ -161,13 +133,14 @@ extension SettingsVC: UINavigationControllerDelegate, UIImagePickerControllerDel
         guard let image = info[UIImagePickerController.InfoKey.originalImage] as? UIImage else { return }
         let avatarImageView = UIHelper.addImageView(on: avatarView)
         avatarImageView.image = image
-        FirebaseManager.shared.uploadImage(currentUserID: currentUser!.uid, photo: image) { (result) in
+        let uuid = UUID().uuidString
+        FirebaseManager.shared.uploadImage(imageName: uuid, photo: image) { (result) in
             switch result {
             case .success(let url):
                 self.changeRequest?.photoURL = url
                 self.saveSomeChanges()
             case .failure(let error):
-                self.presentMessageAlert(title: AlertMesseges.titleAlert, message: error.localizedDescription, buttonTitle: "Ok")
+                self.presentAlert(title: AlertMesseges.titleAlert, message: error.localizedDescription, buttonTitle: "Ok")
             }
         }
     }
